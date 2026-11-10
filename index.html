@@ -246,6 +246,10 @@ body.auth{background:radial-gradient(1200px 600px at 85% -10%,#E9E1FB 0%,transpa
 .codebox{margin-top:16px;padding:12px 14px;border:1.5px dashed #CFC6E6;border-radius:14px;background:#FBFAFF}
 .auth-fields input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:12px;padding:0 12px;background:#fff}
 .lv.lv-sm{padding:12px 10px 10px}.lv.lv-sm b{font-size:13px}.lv.lv-sm small{font-size:11px}
+.evl{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.evf{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:12.5px}
+.evf a{text-decoration:none;color:var(--brand);font-weight:600}.evf small{color:var(--muted)}
+.evbtn{white-space:nowrap;cursor:pointer}
 </style>
 </head>
 <body>
@@ -803,12 +807,12 @@ function pageBaholash(){
   ${locked?`<div class="note">⛔ ${esc(t.label)} oyi uçun baholaş ${t.status==='yopiq'?'yopilgan':'hali oçilmagan'}. Kerak bölsa, Respublika «Oylik vazifalar» böyimida oyni qayta «Faol» qiladi.</div>`:''}
   <div class="row" style="margin-bottom:12px">${regionFilter(true)}<span class="sp"></span>
    <span class="mode" id="dirty"></span><button class="btn acc" id="saveScores" ${locked?'disabled':''}>Özgarişlarni saqlaş</button></div>
-  <div class="tw"><table id="scoreTbl"><thead><tr><th>#</th><th>Maslahatçi / maktab</th><th class="n">Işlar</th>${t.criteria.map((c,i)=>`<th class="n" title="${esc(c.n)}">${i+1}-mezon<br><span style="text-transform:none;font-weight:600">${esc(DIRS[i])}</span><br>max ${c.max}</th>`).join('')}<th class="n">Jami</th><th>Holat</th><th>Izoh</th></tr></thead><tbody>
-  ${list.map((c,ri)=>{const s=scoreOf(view.month,c.id);const v=(s&&s.v)||[];const tot=monthTotal(view.month,c.id);const st=monthState(view.month,c.id);const w=itemsOf(c.id,view.month).length;const wa=accItems(c.id,view.month).length;const hasNote=s&&((s.notes||[]).some(Boolean)||s.note);
+  <div class="tw"><table id="scoreTbl"><thead><tr><th>#</th><th>Maslahatçi / maktab</th><th class="n">Işlar</th>${t.criteria.map((c,i)=>`<th class="n" title="${esc(c.n)}">${i+1}-mezon<br><span style="text-transform:none;font-weight:600">${esc(DIRS[i])}</span><br>max ${c.max}</th>`).join('')}<th class="n">Jami</th><th>Holat</th><th>Izoh / dalil</th></tr></thead><tbody>
+  ${list.map((c,ri)=>{const s=scoreOf(view.month,c.id);const v=(s&&s.v)||[];const tot=monthTotal(view.month,c.id);const st=monthState(view.month,c.id);const w=itemsOf(c.id,view.month).length;const wa=accItems(c.id,view.month).length;const nFiles=s&&s.files?Object.values(s.files).reduce((a,l)=>a+(l||[]).length,0):0;const hasNote=s&&((s.notes||[]).some(Boolean)||s.note||nFiles);
    return `<tr data-cid="${c.id}"><td>${ri+1}</td><td>${pLink(c)}<div style="color:var(--muted);font-size:12px">${esc(c.maktab)} • ${esc(c.tuman||'')}</div></td>
    <td class="n"><a href="#m-${esc(c.id)}" class="pill ${w?'p-blue':'p-gray'}" style="text-decoration:none" title="Qabul qilingan / jami">${wa}/${w}</a></td>
    ${t.criteria.map((cr,i)=>`<td class="n"><input class="sc" type="number" min="0" max="${cr.max}" step="1" data-i="${i}" value="${v[i]??''}" ${locked?'disabled':''}></td>`).join('')}
-   <td class="n"><b class="tot">${tot??(v.some(x=>x!=null&&x!=='')?v.reduce((a,b)=>a+(Number(b)||0),0):'—')}</b></td><td><span class="pill ${st==='Yakunlangan'?'p-ok':st==='Kiritilmagan'?'p-gray':'p-warn'}">${st}</span></td><td><button class="btn sm ${hasNote?'':'ghost'}" data-note="${esc(c.id)}" title="Mezonlar böyiça izoh">💬</button></td></tr>`}).join('')||`<tr><td colspan="14" class="empty">Bu hududda maslahatçilar yöq.</td></tr>`}
+   <td class="n"><b class="tot">${tot??(v.some(x=>x!=null&&x!=='')?v.reduce((a,b)=>a+(Number(b)||0),0):'—')}</b></td><td><span class="pill ${st==='Yakunlangan'?'p-ok':st==='Kiritilmagan'?'p-gray':'p-warn'}">${st}</span></td><td><button class="btn sm ${hasNote?'':'ghost'}" data-note="${esc(c.id)}" title="Mezonlar böyiça izoh va dalil fayllari">💬${nFiles?` 📎${nFiles}`:''}</button></td></tr>`}).join('')||`<tr><td colspan="14" class="empty">Bu hududda maslahatçilar yöq.</td></tr>`}
   </tbody></table></div>`;
 }
 async function saveScores(){
@@ -972,10 +976,10 @@ function pageProfil(cid){
    <div class="card"><div class="row"><h2 style="margin:0">${esc(t.label)} — bajarilgan işlar (${its.length})</h2><span class="sp"></span>${own?'<button class="btn acc" id="addItem">+ Bajarilgan iş qöşiş</button>':''}</div>
     ${t.criteria.map((cr,i)=>{const got=v[i];const pct=got==null||got===''||!cr.max?null:clampW(got/cr.max*100);const ci=its.filter(x=>x.crit===i);return `<div class="crit"><div class="no">${i+1}</div><div><b>${esc(cr.n)}</b><div class="ev">📎 ${esc(cr.ev)}</div>${pct!=null?`<div class="bar" style="margin-top:6px;max-width:320px"><i style="width:${pct}%;background:${lvl(pct).c}"></i></div>`:''}
       <div style="margin-top:8px">${ci.map(item).join('')||`<div class="ev" style="font-style:italic">Hali iş kiritilmagan</div>`}</div>
-      ${s&&s.notes&&s.notes[i]?`<div class="wi" style="border-color:var(--acc);background:#FFF8F0">💬 <b>Mutaxassis izohi:</b> ${esc(s.notes[i])}</div>`:''}
+      ${s&&((s.notes&&s.notes[i])||(s.files&&s.files[i]&&s.files[i].length))?`<div class="wi" style="border-color:var(--acc);background:#FFF8F0">${s.notes&&s.notes[i]?`💬 <b>Mutaxassis izohi:</b> ${esc(s.notes[i])}`:'📎 <b>Dalil fayllari</b>'}${s.files&&s.files[i]&&s.files[i].length?`<div class="evl">${evList(s.files[i])}</div>`:''}</div>`:''}
       ${own?`<button class="btn sm ghost" style="margin-top:6px" data-additem="${i}">+ Şu yönalişga iş qöşiş</button>`:''}</div>
       <div style="text-align:right"><b style="font-size:18px">${got??'—'}</b><span style="color:var(--muted)"> / ${cr.max}</span></div></div>`}).join('')}
-    ${s&&s.note?`<div class="wi" style="border-color:var(--acc);background:#FFF8F0;margin-top:10px">💬 <b>Umumiy izoh:</b> ${esc(s.note)}</div>`:''}
+    ${s&&(s.note||(s.files&&s.files.g&&s.files.g.length))?`<div class="wi" style="border-color:var(--acc);background:#FFF8F0;margin-top:10px">${s.note?`💬 <b>Umumiy izoh:</b> ${esc(s.note)}`:'📎 <b>Hujjatlar</b>'}${s.files&&s.files.g&&s.files.g.length?`<div class="evl">${evList(s.files.g)}</div>`:''}</div>`:''}
     ${s&&s.by?`<p class="mode" style="margin-top:10px">Baholagan: ${esc(s.by)} • ${esc(String(s.at||'').slice(0,10))}</p>`:''}
     ${(()=>{const ap=appealsOf(cid).filter(a=>a.m===m);const canAp=own&&tot!=null&&appealOpen(cid,m);
       return `${ap.map(a=>{const r=appealRes(a.id);return `<div class="wi" style="border-color:${r?(r.st==='qabul'?'var(--ok)':'var(--bad)'):'var(--warn)'};margin-top:10px">⚖️ <b>E'tiroz</b> (${a.crit>=0?(a.crit+1)+'-mezon':'umumiy'}, ${esc(String(a.at).slice(0,10))}): ${esc(a.text)}<div style="margin-top:4px">${r?`<span class="pill ${r.st==='qabul'?'p-ok':'p-bad'}">${r.st==='qabul'?'Qabul qilindi':'Rad etildi'}</span> ${esc(r.answer||'')}`:'<span class="pill p-warn">Körib çiqilmoqda</span>'}</div></div>`}).join('')}
@@ -1054,16 +1058,77 @@ function outForm(){
 }
 
 /* ---------- IZOH, E'TIROZ, IŞ TASDIQLAŞ, MENTOR ---------- */
+/* ---------- Dalil fayllari (buyruq, Word, Excel, PDF, rasm) ---------- */
+const EV_EXT={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};
+const EV_ICON={pdf:'📕',jpg:'🖼',jpeg:'🖼',png:'🖼',docx:'📘',xlsx:'📗'};
+const extOf=n=>String(n||'').toLowerCase().split('.').pop();
+const kb=b=>b>=1048576?(b/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(b/1024))+' KB';
+let _assets; async function getAssets(){if(_assets!==undefined)return _assets;try{_assets=(window.claude&&claude.use)?await claude.use('assets'):null}catch(e){_assets=null}return _assets}
+const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+async function uploadEvidence(file){
+  const ext=extOf(file.name);
+  if(ext==='doc'||ext==='xls')throw new Error(`.${ext} — eski format. Faylni Word/Excel'da oçib, .${ext}x qilib saqlang`);
+  if(!EV_EXT[ext])throw new Error('Faqat PDF, Word (.docx), Excel (.xlsx), JPG yoki PNG fayl');
+  const meta={name:file.name,size:file.size,ext,at:new Date().toISOString()};
+  if(Store.mode==='local'){
+    if(file.size>1.5*1048576)throw new Error('Namuna rejimida fayl 1,5 MB dan oşmasin');
+    meta.data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)});return meta;
+  }
+  const A=await getAssets(); if(!A)throw new Error("Fayl yuklaş uçun platforma egasi sizga «Editor» huquqini berişi kerak");
+  const raw=['pdf','jpg','jpeg','png'].includes(ext);
+  if(!raw&&file.size>14*1048576)throw new Error('Word/Excel fayl 14 MB dan oşmasin');
+  if(file.size>20*1048576)throw new Error('Fayl 20 MB dan oşmasin');
+  try{
+    let r;
+    if(raw)r=await A.upload(file,{type:EV_EXT[ext]});
+    else{const wrap=JSON.stringify({kpiFile:1,name:file.name,type:EV_EXT[ext],b64:b64(await file.arrayBuffer())});r=await A.upload(new Blob([wrap]),{type:'application/json'});meta.wrap=1}
+    meta.id=r.id;return meta;
+  }catch(e){throw new Error(e&&e.code==='too_large'?'Fayl juda katta':e&&e.code==='quota_or_state'?'Fayl xotirasi töldi':e&&e.code==='unsupported_type'?'Bu turdagi fayl qabul qilinmaydi':'Yuklab bölmadi'+(e&&e.code?' ('+e.code+')':''))}
+}
+async function openEvidence(f){
+  try{
+    let blob;
+    if(f.data){blob=await (await fetch(f.data)).blob()}
+    else{const res=await fetch('/_blob/'+f.id);if(!res.ok)throw 0;
+      if(f.wrap){const j=await res.json();const bin=atob(j.b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);blob=new Blob([u],{type:j.type})}else blob=await res.blob()}
+    let dl=null;try{dl=(window.claude&&claude.use)?await claude.use('downloads'):null}catch(e){}
+    if(dl){try{await dl.save({filename:f.name,data:blob})}catch(e){if(e&&e.code!=='declined')toast('Saqlab bölmadi')}return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+  }catch(e){toast('Faylni oçib bölmadi')}
+}
+function evList(files,editKey){return (files||[]).map((f,k)=>`<span class="evf"><a href="javascript:void 0" data-evopen="${esc(JSON.stringify(f))}" title="Yuklab oliş">${EV_ICON[f.ext]||'📎'} ${esc(f.name)}</a><small>${kb(f.size)}</small>${editKey!=null?`<a href="javascript:void 0" data-evdel="${esc(editKey)}|${k}" title="Olib taşlaş" style="color:var(--bad);text-decoration:none">✕</a>`:''}</span>`).join('')}
+function bindEvOpen(root){(root||document).querySelectorAll('[data-evopen]').forEach(a=>a.onclick=()=>{try{openEvidence(JSON.parse(a.dataset.evopen))}catch(e){}})}
+
 function noteForm(cid){
   if(!canEnterScore()||!inMyDistrict(cid)){toast('Izohni faqat öz tumani mutaxassisi yozadi');return}
   const m=view.month,t=task(m),s=scoreOf(m,cid);const nn=(s&&s.notes)||[];
   if(!s){toast("Avval ball kiriting va saqlang");return}
-  openModal(`<h2>Izohlar — ${esc(cName(cid))}</h2><p class="sub">${esc(t.label)}. Maslahatçi izohni öz sahifasida köradi va ${APPEAL_DAYS} kun içida e'tiroz bildira oladi.</p><form id="nf2" class="grid" style="gap:8px">
-   ${t.criteria.map((c,i)=>`<label style="font-size:12.5px"><b>${i+1}.</b> ${esc(c.n)} <span style="color:var(--muted)">(${s.v&&s.v[i]!=null?s.v[i]:'—'} / ${c.max})</span><br><input name="n${i}" value="${esc(nn[i]||'')}" style="width:100%" placeholder="Masalan: dalil sifatida faqat bitta foto taqdim etilgan"></label>`).join('')}
-   <label>Umumiy izoh<br><textarea name="note">${esc(s.note||'')}</textarea></label>
-   <div class="row"><button class="btn">Saqlaş</button><button type="button" class="btn ghost" onclick="closeModal()">Bekor qiliş</button></div></form>`);
-  $('#nf2').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const notes=t.criteria.map((c,i)=>(f['n'+i]||'').trim());
-    try{await Store.set('scores',s.id,{...body(s),notes,note:(f.note||'').trim(),noteBy:whoLabel(),noteAt:new Date().toISOString()});logA('Izoh yozildi',cName(cid),t.label);closeModal();toast('Izoh saqlandi')}catch(e){}};
+  const files=JSON.parse(JSON.stringify(s.files||{})); const removed=[];
+  const draw=()=>{
+    openModal(`<h2>Izohlar va dalillar — ${esc(cName(cid))}</h2><p class="sub">${esc(t.label)}. Maslahatçi izoh va dalillarni öz sahifasida köradi va ${APPEAL_DAYS} kun içida e'tiroz bildira oladi.</p><form id="nf2" class="grid" style="gap:10px">
+     ${t.criteria.map((c,i)=>`<div><label style="font-size:12.5px"><b>${i+1}.</b> ${esc(c.n)} <span style="color:var(--muted)">(${s.v&&s.v[i]!=null?s.v[i]:'—'} / ${c.max})</span></label>
+      <div class="row" style="flex-wrap:nowrap;gap:6px;margin-top:4px"><input name="n${i}" value="${esc(document.querySelector('#nf2 [name=n'+i+']')?.value??nn[i]??'')}" style="flex:1" placeholder="Masalan: dalil sifatida faqat bitta foto taqdim etilgan">
+      <label class="btn sm ghost evbtn" title="Dalil fayli biriktiriş (PDF, Word, Excel, rasm)">📎<input type="file" data-evup="${i}" accept=".pdf,.docx,.xlsx,.doc,.xls,.jpg,.jpeg,.png" hidden multiple></label></div>
+      ${(files[i]||[]).length?`<div class="evl">${evList(files[i],i)}</div>`:''}</div>`).join('')}
+     <div><label>Umumiy izoh</label><textarea name="note">${esc(document.querySelector('#nf2 [name=note]')?.value??s.note??'')}</textarea>
+      <div class="row" style="margin-top:6px;gap:8px"><label class="btn sm ghost evbtn">📎 Hujjat biriktiriş (direktor buyruği, dalolatnoma…)<input type="file" data-evup="g" accept=".pdf,.docx,.xlsx,.doc,.xls,.jpg,.jpeg,.png" hidden multiple></label><span class="mode" style="opacity:1;color:var(--muted)">PDF, Word (.docx), Excel (.xlsx), JPG/PNG · 20 MB gaça</span></div>
+      ${(files.g||[]).length?`<div class="evl">${evList(files.g,'g')}</div>`:''}</div>
+     <p class="mode" id="evProg" style="opacity:1;color:var(--brand)"></p>
+     <div class="row"><button class="btn">Saqlaş</button><button type="button" class="btn ghost" onclick="closeModal()">Bekor qiliş</button></div></form>`);
+    document.querySelectorAll('#nf2 [data-evup]').forEach(inp=>inp.onchange=async()=>{const key=inp.dataset.evup;const list=[...inp.files];if(!list.length)return;
+      const keep=Object.fromEntries([...new FormData($('#nf2'))]);
+      for(const f of list){$('#evProg').textContent=`⏳ ${f.name} yuklanmoqda…`;try{const meta=await uploadEvidence(f);(files[key]=files[key]||[]).push(meta)}catch(e){toast(e.message||'Yuklab bölmadi')}}
+      draw();Object.entries(keep).forEach(([k,v])=>{const el=document.querySelector('#nf2 [name="'+k+'"]');if(el&&typeof v==='string')el.value=v});$('#evProg').textContent='';});
+    document.querySelectorAll('#nf2 [data-evdel]').forEach(a=>a.onclick=()=>{const [key,k]=a.dataset.evdel.split('|');const keep=Object.fromEntries([...new FormData($('#nf2'))]);const [rm]=files[key].splice(Number(k),1);if(rm&&rm.id)removed.push(rm.id);draw();Object.entries(keep).forEach(([kk,v])=>{const el=document.querySelector('#nf2 [name="'+kk+'"]');if(el&&typeof v==='string')el.value=v})});
+    bindEvOpen($('#nf2'));
+    $('#nf2').onsubmit=async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));const notes=t.criteria.map((c,i)=>(f['n'+i]||'').trim());
+      Object.keys(files).forEach(k=>{if(!files[k]||!files[k].length)delete files[k]});
+      const nf=Object.values(files).reduce((a,l)=>a+l.length,0);
+      try{await Store.set('scores',s.id,{...body(s),notes,note:(f.note||'').trim(),files,noteBy:whoLabel(),noteAt:new Date().toISOString()});
+        if(removed.length){const A=await getAssets();if(A)for(const id of removed){try{await A.delete(id)}catch(e){}}}
+        logA('Izoh yozildi',cName(cid),t.label+(nf?` · ${nf} ta dalil fayli`:''));closeModal();toast('Izoh va dalillar saqlandi')}catch(e){}};
+  };
+  draw();
 }
 function appealForm(){
   const m=view.month,t=task(m);
@@ -1427,7 +1492,7 @@ function render(){
   const sm=$('#setMentor'); if(sm)sm.onclick=()=>mentorForm(sm.dataset.cid);
   const eo=$('#editOut'); if(eo)eo.onclick=outForm;
   document.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>makeReport(b.dataset.rep));
-  bindXodimlar();
+  bindXodimlar(); bindEvOpen($('#app'));
   const tjD=$('#tjD'),tjV=$('#tjV'); if(tjD)tjD.onchange=()=>{view.tj={...(view.tj||{}),d:tjD.value};render()}; if(tjV)tjV.onchange=()=>{view.tj={...(view.tj||{}),v:tjV.value};render()};
   const ach=$('#addAch'); if(ach)ach.onclick=achForm;
   document.querySelectorAll('[data-delach]').forEach(b=>b.onclick=()=>confirmBox("Bu yutuq öçirilsinmi?",()=>saveMine({ach:achOf(myCid()).filter(a=>a.id!==b.dataset.delach)})));
